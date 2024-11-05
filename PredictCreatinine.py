@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template_string
 from flask_cors import CORS  # Import CORS
 import pickle
 import numpy as np
@@ -7,6 +7,11 @@ import io
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes and origins
+
+# Homepage route to check if the app is running
+@app.route('/')
+def home():
+    return render_template_string("<h1>Welcome to the Creatinine Concentration Prediction API</h1><p>Status: Running</p>")
 
 # Function to extract basic features from an image
 def extract_features(image):
@@ -62,4 +67,4 @@ def predict():
 
 # Run the Flask app
 if __name__ == '__main__':
-    app.run(debug=True, host="0.0.0.0")  # host set to 0.0.0.0 to accept all regions
+    app.run(debug=True, host="0.0.0.0", port=5000)  # host set to 0.0.0.0 to accept all regions
