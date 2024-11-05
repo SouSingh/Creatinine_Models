@@ -4,7 +4,7 @@ import requests
 url = "http://127.0.0.1:5000/predict"
 
 # Path to the image file
-image_path = "077.png"  # Replace with the path to your image
+image_path = "064.png"  # Replace with the path to your image
 
 # Open the image file in binary mode
 with open(image_path, "rb") as image_file:

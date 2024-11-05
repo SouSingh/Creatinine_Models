@@ -1,50 +1,44 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS  # Import CORS
+from transformers import ViTFeatureExtractor, ViTModel
+import torch
 import pickle
 import numpy as np
 from PIL import Image
 import io
 
-app = Flask(__name__)
+app = Flask(name)
 CORS(app)  # Enable CORS for all routes and origins
 
-# Function to extract basic features from an image
+# Load the ViT feature extractor and model for feature extraction
+feature_extractor = ViTFeatureExtractor.from_pretrained("google/vit-base-patch16-224-in21k")
+vit_model = ViTModel.from_pretrained("google/vit-base-patch16-224-in21k")
+vit_model.eval()
+
+# Function to extract features from an image using ViT
 def extract_features(image):
-    # Convert image to RGB if it's not already
     if image.mode != "RGB":
         image = image.convert("RGB")
-    
-    # Resize image to a fixed size (e.g., 32x32) to create a simple feature vector
-    resized_image = image.resize((32, 32))
-    
-    # Convert the resized image to a numpy array and flatten it to create a feature vector
-    feature_vector = np.array(resized_image).flatten()
-    
-    return feature_vector
+    inputs = feature_extractor(images=image, return_tensors="pt")
+    with torch.no_grad():
+        features = vit_model(**inputs).last_hidden_state.mean(dim=1).squeeze().numpy()
+    return features
 
 # Function to load models and make predictions
 def predict_creatinine_concentration(image):
-    # Extract features from the image
     features = extract_features(image).reshape(1, -1)
-    
-    # Define model paths and names for loading
     model_files = {
         "Histogram_Boosted_Trees": "Histogram_Boosted_Trees.pkl",
         "Random_Forest": "Random_Forest.pkl",
         "Decision_Tree": "Decision_Tree.pkl",
         "Linear_Regression": "Linear_Regression.pkl"
     }
-    
-    # Dictionary to store predictions
     predictions = {}
-    
-    # Loop through each model, load it, and make a prediction
     for model_name, model_file in model_files.items():
         with open(model_file, "rb") as file:
             model = pickle.load(file)
         concentration = model.predict(features)[0]
         predictions[model_name] = float(concentration)
-    
     return predictions
 
 # Flask endpoint to receive image and return predictions
@@ -56,10 +50,9 @@ def predict():
     image_file = request.files['image']
     image = Image.open(io.BytesIO(image_file.read()))
 
-    # Get predictions
     predictions = predict_creatinine_concentration(image)
     return jsonify(predictions)
 
 # Run the Flask app
-if __name__ == '__main__':
+if name == 'main':
     app.run(debug=True, host="0.0.0.0")  # host set to 0.0.0.0 to accept all regions

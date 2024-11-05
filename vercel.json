@@ -1,0 +1,14 @@
+{
+    "builds": [
+        {
+            "src": "PredictCreatinine.py",
+            "use": "@vercel/python"
+        }
+    ],
+    "routes": [
+        {
+            "src": "/(.*)",
+            "dest": "PredictCreatinine.py"
+        }
+    ]
+}
